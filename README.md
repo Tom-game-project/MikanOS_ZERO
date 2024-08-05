@@ -1,4 +1,4 @@
-# Tom-O
+# Tom-os (MikanOS-ZERO)
 
 みかん本の写経
 
