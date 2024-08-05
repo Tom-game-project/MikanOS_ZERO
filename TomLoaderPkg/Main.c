@@ -90,3 +90,28 @@ EFI_STATUS SaveMemoryMap(struct MemoryMap *map,EFI_FILE_PROTOCOL *file){
     return EFI_SUCCESS;
 }
 
+EFI_STATUS OpenRootDir(EFI_HANDLE image_handle, EFI_FILE_PROTOCOL** root){
+    EFI_LOADED_IMAGE_PROTOCOL* loaded_image;
+    EFI_SIMPLE_FILE_SYSTEM_PROTOCOL* fs;
+
+    gBS->OpenProtocol(
+        image_handle,
+        &gEfiLoadedImageProtocolGuid,
+        (VOID**) &fs,
+        image_handle,
+        NULL,
+        EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL
+    );
+
+    gBS->OpenProtocol(
+        loaded_image->DeviceHandle,
+        &gEfiSimpleFileSystemProtocolGuid,
+        (VOID**)&fs,
+        image_handle,
+        NULL,
+        EFI_OPEN_PROTOCOL_BY_HANDLE_PROTOCOL
+    );
+
+    fs->OpenVolume(fs, root);
+    return EFI_SUCCESS;
+}
