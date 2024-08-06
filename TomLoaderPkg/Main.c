@@ -23,6 +23,7 @@ struct MemoryMap
 /// @param map 
 /// @return EFI_STATUS
 /// @brief メモリマップを取得する
+/// # MemoryMapのデータ構造
 /// ```
 ///                           /- map.buffer
 /// +                       +/
@@ -45,11 +46,15 @@ EFI_STATUS GetMemoryMap(struct MemoryMap *map) {
 
     map->map_size = map->buffer_size;
     return gBS->GetMemoryMap(
-        &map->map_size,
-        (EFI_MEMORY_DESCRIPTOR*) map->buffer,
-        &map->map_key,
-        &map->descriptor_size,
-        &map->descriptor_version
+        &map->map_size,                        // IN OUT UINTN *MemoryMapSize             } -> メモリマップ書き込み用のメモリ領域の大きさ
+        (EFI_MEMORY_DESCRIPTOR*) map->buffer,  // IN OUT EFI_MEMORY_DESCRIPTOR *MemoryMap } -> メモリマップ書き込み用のメモリ領域の先頭アドレス
+                                               // -- --- 
+                                               //  \  \ 
+                                               //   \--\--> (IN):メモリ領域の先頭ポインタを入力するという意味
+                                               //       \--> (OUT):メモリマップが書き込まれるという意味
+        &map->map_key,                         // OUT UINTN *MapKey                       } ->
+        &map->descriptor_size,                 // OUT UINTN *DescriptorSize
+        &map->descriptor_version               // OUT UINT32 *DescriptorVersion
     );// 書き込みが成功したらEFI_SUCCESSを返却する
 }
 
