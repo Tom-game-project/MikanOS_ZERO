@@ -20,9 +20,24 @@ struct MemoryMap
 };
 
 /// # GetMemoryMap
-/// @brief メモリマップを取得する
 /// @param map 
 /// @return EFI_STATUS
+/// @brief メモリマップを取得する
+/// ```
+///                           /- map.buffer
+/// +                       +/
+/// +-----------------------+ \---------------------------\ 
+/// | EFI_MEMORY_DESCRIPTOR |  }- map.descriptor_size      |
+///.+-----------------------+  |                           |
+/// +-----------------------+ /                            |
+/// | EFI_MEMORY_DESCRIPTOR |                              }- map.map_size
+/// +-----------------------+                              |
+/// +-----------------------+                              |
+/// |          ...          |                              |
+/// +-----------------------+                              |
+/// +-----------------------+ ----------------------------/
+/// +                       +
+/// ```
 EFI_STATUS GetMemoryMap(struct MemoryMap *map) {
     if (map->buffer == NULL){
         return EFI_BUFFER_TOO_SMALL;
@@ -35,7 +50,7 @@ EFI_STATUS GetMemoryMap(struct MemoryMap *map) {
         &map->map_key,
         &map->descriptor_size,
         &map->descriptor_version
-    );
+    );// 書き込みが成功したらEFI_SUCCESSを返却する
 }
 
 const CHAR16 *GetMemoryTypeUnicode(EFI_MEMORY_TYPE type){
