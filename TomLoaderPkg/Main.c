@@ -25,13 +25,13 @@ struct MemoryMap
 /// @brief メモリマップを取得する
 /// # MemoryMapのデータ構造
 /// ```
-///                           /- map.buffer
+///                           / -> map.buffer
 /// +                       +/
 /// +-----------------------+ \---------------------------\ 
-/// | EFI_MEMORY_DESCRIPTOR |  }- map.descriptor_size      |
+/// | EFI_MEMORY_DESCRIPTOR |  } -> map.descriptor_size    |
 ///.+-----------------------+  |                           |
 /// +-----------------------+ /                            |
-/// | EFI_MEMORY_DESCRIPTOR |                              }- map.map_size
+/// | EFI_MEMORY_DESCRIPTOR |                              } -> map.map_size
 /// +-----------------------+                              |
 /// +-----------------------+                              |
 /// |          ...          |                              |
@@ -45,16 +45,19 @@ EFI_STATUS GetMemoryMap(struct MemoryMap *map) {
     }
 
     map->map_size = map->buffer_size;
+    // # EDK2のグローバル変数
+    // global Boot Service: gBS
+    // global Runtime Service : gRS
     return gBS->GetMemoryMap(
-        &map->map_size,                        // IN OUT UINTN *MemoryMapSize             } -> メモリマップ書き込み用のメモリ領域の大きさ
-        (EFI_MEMORY_DESCRIPTOR*) map->buffer,  // IN OUT EFI_MEMORY_DESCRIPTOR *MemoryMap } -> メモリマップ書き込み用のメモリ領域の先頭アドレス
-                                               // -- --- 
-                                               //  \  \ 
-                                               //   \--\--> (IN):メモリ領域の先頭ポインタを入力するという意味
-                                               //       \--> (OUT):メモリマップが書き込まれるという意味
-        &map->map_key,                         // OUT UINTN *MapKey                       } ->
-        &map->descriptor_size,                 // OUT UINTN *DescriptorSize
-        &map->descriptor_version               // OUT UINT32 *DescriptorVersion
+        &map->map_size,                        // 1: IN OUT UINTN *MemoryMapSize             # -> メモリマップ書き込み用のメモリ領域の大きさ
+        (EFI_MEMORY_DESCRIPTOR*) map->buffer,  // 2: IN OUT EFI_MEMORY_DESCRIPTOR *MemoryMap # -> メモリマップ書き込み用のメモリ領域の先頭アドレス
+                                               //    -- --- 
+                                               //     \  \ 
+                                               //      \--\--> (IN):メモリ領域の先頭ポインタを入力するという意味
+                                               //          \--> (OUT):メモリマップが書き込まれるという意味
+        &map->map_key,                         // 3: OUT UINTN *MapKey     # -> メモリマップの識別に使う値 後で`gBS->ExitBootService()`を呼び出すときに使う
+        &map->descriptor_size,                 // 4: OUT UINTN *DescriptorSize # -> UEFIの実装によって値がまちまちなため`sizeof(EFI_MEMORY_DESCRIPTOR)`では不正確
+        &map->descriptor_version               // 5: OUT UINT32 *DescriptorVersion -> メモリマップのバージョン番号
     );// 書き込みが成功したらEFI_SUCCESSを返却する
 }
 
@@ -144,9 +147,13 @@ EFI_STATUS EFIAPI UefiMain(
     Print(L"Hello, TOMOS World!\n");
     CHAR8 memmap_buf[4096 * 4];
     struct MemoryMap memmap = {
-        sizeof(memmap_buf),
-        memmap_buf,
-        0,0,0,0
+                           // memmap structure definition
+        sizeof(memmap_buf),// UINTN buffer_size;
+        memmap_buf,        // VOID *buffer;
+        0,                 // UINTN map_size;
+        0,                 // UINTN map_key;
+        0,                 // UINTN descriptor_size;
+        0                  // UINT32 descriptor_version;
     };
     GetMemoryMap(&memmap);
 
